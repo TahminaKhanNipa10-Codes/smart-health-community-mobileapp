@@ -29,6 +29,11 @@ jobs:
           java-version: "21"
           distribution: "temurin"
 
+      - name: Setup Gradle 8.14.3
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.14.3"
+
       - name: Install dependencies
         run: npm ci
 
@@ -40,27 +45,30 @@ jobs:
       - name: Sync Capacitor Android
         run: npm run cap:sync
 
-      - name: Verify Firebase Android Configuration
+      - name: Generate Gradle Wrapper
         run: |
-          echo "Checking google-services.json..."
-          test -f android/app/google-services.json
-          grep -n '"package_name"' android/app/google-services.json
-          grep -n '"project_id"' android/app/google-services.json
+          cd android
+          gradle wrapper --gradle-version 8.14.3 --distribution-type all
 
-          echo "Checking applicationId..."
-          grep -n "applicationId" android/app/build.gradle
+      - name: Verify Gradle Wrapper
+        run: |
+          cd android
+          ls -lh gradlew
+          ls -lh gradle/wrapper/
+          test -f gradle/wrapper/gradle-wrapper.jar
+          test -f gradle/wrapper/gradle-wrapper.properties
 
       - name: Build Debug APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Get Debug SHA Fingerprint
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew signingReport
+          ./gradlew signingReport --no-daemon
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
