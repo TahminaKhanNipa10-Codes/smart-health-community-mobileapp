@@ -1,0 +1,367 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile containing basic demographics and health info",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique user ID from Firebase Auth"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Full name"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "doctor", "admin"],
+          "description": "Role of the user in the community"
+        },
+        "age": {
+          "type": "number",
+          "description": "Age of the user"
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["Male", "Female", "Other", ""],
+          "description": "Gender of the user"
+        },
+        "height": {
+          "type": "number",
+          "description": "Height in cm"
+        },
+        "weight": {
+          "type": "number",
+          "description": "Weight in kg"
+        },
+        "bloodGroup": {
+          "type": "string",
+          "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", ""],
+          "description": "Blood group of the user"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Contact number"
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Physical address"
+        },
+        "emergencyContact": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Emergency contact person and/or phone"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of profile creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of last update"
+        }
+      },
+      "required": ["uid", "email", "name", "role"]
+    },
+    "HealthLog": {
+      "title": "Health Log Entry",
+      "description": "User specific measurements for BMI, Water intake, Blood Sugar, and Blood Pressure tracking",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["bmi", "water", "blood_sugar", "blood_pressure"],
+          "description": "Category of health tracking entry"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Firebase server timestamp"
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Type-specific numeric metrics map"
+        }
+      },
+      "required": ["userId", "type", "createdAt", "metrics"]
+    },
+    "Post": {
+      "title": "Community Post",
+      "description": "A post in the social health feed",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "content": { "type": "string" },
+        "likes": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "authorName", "content", "likes", "createdAt"]
+    },
+    "Comment": {
+      "title": "Post Comment",
+      "description": "A user comment on a community post",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "userId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["postId", "userId", "authorName", "content", "createdAt"]
+    },
+    "BloodRequest": {
+      "title": "Blood Donation Request",
+      "description": "An emergency or standard request for blood donation",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "bloodGroup": { "type": "string" },
+        "unitsRequired": { "type": "number" },
+        "hospital": { "type": "string" },
+        "contactNumber": { "type": "string" },
+        "isEmergency": { "type": "boolean" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "patientName", "bloodGroup", "unitsRequired", "hospital", "contactNumber", "isEmergency", "createdAt"]
+    },
+    "Donor": {
+      "title": "Blood Donor",
+      "description": "Information about registered blood donors",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "fullName": { "type": "string", "maxLength": 100 },
+        "bloodGroup": { "type": "string" },
+        "phoneNumber": { "type": "string", "maxLength": 20 },
+        "district": { "type": "string", "maxLength": 100 },
+        "lastDonationDate": { "type": "string" },
+        "availableNow": { "type": "boolean" },
+        "emergencyDonation": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "fullName", "bloodGroup", "phoneNumber", "district", "lastDonationDate", "availableNow", "emergencyDonation", "createdAt", "updatedAt"]
+    },
+    "Appointment": {
+      "title": "Doctor Appointment Slot",
+      "description": "A scheduled appointment booking with a practitioner",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientUid": { "type": "string" },
+        "userName": { "type": "string" },
+        "patientName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "patientEmail": { "type": "string" },
+        "patientPhone": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "doctorUserId": { "type": "string" },
+        "doctorName": { "type": "string" },
+        "doctorSpecialty": { "type": "string" },
+        "specialization": { "type": "string" },
+        "hospital": { "type": "string" },
+        "appointmentDate": { "type": "string" },
+        "appointmentTime": { "type": "string" },
+        "consultationType": { "type": "string", "enum": ["in_person", "video", "voice"] },
+        "symptoms": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "completed", "Pending", "Approved", "Declined", "Cancelled"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["doctorId", "doctorName", "appointmentDate", "appointmentTime", "status", "createdAt"]
+    },
+    "Doctor": {
+      "title": "Doctor Directory Entry",
+      "description": "A practitioner in the community directory",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "specialty": { "type": "string" },
+        "hospital": { "type": "string" },
+        "experience": { "type": "string" },
+        "email": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "schedule": {
+          "type": "object",
+          "description": "Weekly available days and times. Map of day-of-week strings (e.g., 'Monday') to arrays of time strings."
+        }
+      },
+      "required": ["name", "specialty", "hospital", "experience", "email"]
+    },
+    "Article": {
+      "title": "Health Article",
+      "description": "An educational health article",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "author": { "type": "string" },
+        "readTime": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "summary", "content", "category", "author", "readTime", "createdAt"]
+    },
+    "Notification": {
+      "title": "User Notification",
+      "description": "A notification alert for likes, comments, blood requests, or appointments",
+      "type": "object",
+      "properties": {
+        "recipientId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "type": { "type": "string", "enum": ["like", "comment", "blood_request", "appointment"] },
+        "message": { "type": "string" },
+        "relatedId": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["recipientId", "senderId", "senderName", "type", "message", "relatedId", "read", "createdAt"]
+    },
+    "MedicalReport": {
+      "title": "Medical Report",
+      "description": "User personal medical reports, prescriptions, lab results, and imaging files",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner user UID" },
+        "title": { "type": "string", "maxLength": 200, "description": "Report name or title" },
+        "category": { "type": "string", "enum": ["Lab Report", "Prescription", "Imaging Report", "Other"] },
+        "hospital": { "type": "string", "maxLength": 200 },
+        "doctor": { "type": "string", "maxLength": 200 },
+        "reportDate": { "type": "string" },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "externalLink": { "type": "string", "maxLength": 1000 },
+        "fileName": { "type": "string", "maxLength": 255 },
+        "fileType": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "title", "category", "reportDate", "createdAt"]
+    },
+    "EmergencyHospital": {
+      "title": "Emergency Hospital",
+      "description": "Nearby emergency hospitals and trauma centers",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "distance": { "type": "string" },
+        "phone": { "type": "string" },
+        "isOpen": { "type": "boolean" },
+        "emergencyAvailable": { "type": "boolean" },
+        "traumaLevel": { "type": "string" },
+        "icubeds": { "type": "number" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" }
+      },
+      "required": ["name", "address", "distance", "phone", "isOpen", "emergencyAvailable"]
+    },
+    "EmergencyAmbulance": {
+      "title": "Emergency Ambulance Service",
+      "description": "Ambulance service directory entries",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["national", "hospital", "private"] },
+        "serviceCategory": { "type": "string" },
+        "phone": { "type": "string" },
+        "availability": { "type": "string" },
+        "coverageArea": { "type": "string" },
+        "isFeatured": { "type": "boolean" }
+      },
+      "required": ["name", "type", "serviceCategory", "phone", "availability", "coverageArea"]
+    },
+    "EmergencyPharmacy": {
+      "title": "Emergency Pharmacy",
+      "description": "Nearby pharmacies and night chemists",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "distance": { "type": "string" },
+        "phone": { "type": "string" },
+        "isOpen": { "type": "boolean" },
+        "is24Seven": { "type": "boolean" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" }
+      },
+      "required": ["name", "address", "distance", "phone", "isOpen", "is24Seven"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Profiles of registered users, doctors, and admins"
+    },
+    "health_logs/{logId}": {
+      "schema": "HealthLog",
+      "description": "Biometric measurements and tracking inputs logged by users"
+    },
+    "posts/{postId}": {
+      "schema": "Post",
+      "description": "Posts created by users in the community feed"
+    },
+    "comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Comments left on individual posts"
+    },
+    "blood_requests/{requestId}": {
+      "schema": "BloodRequest",
+      "description": "Active requests for blood donations"
+    },
+    "appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "Booked user appointments"
+    },
+    "doctors/{doctorId}": {
+      "schema": "Doctor",
+      "description": "Practitioners available for consultations"
+    },
+    "articles/{articleId}": {
+      "schema": "Article",
+      "description": "Educational articles"
+    },
+    "notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    },
+    "donors/{donorId}": {
+      "schema": "Donor",
+      "description": "Registered blood donors"
+    },
+    "medical_reports/{reportId}": {
+      "schema": "MedicalReport",
+      "description": "User personal medical reports and clinical records"
+    },
+    "emergency_hospitals/{hospitalId}": {
+      "schema": "EmergencyHospital",
+      "description": "Nearby emergency hospitals"
+    },
+    "emergency_ambulances/{ambulanceId}": {
+      "schema": "EmergencyAmbulance",
+      "description": "Ambulance emergency directory"
+    },
+    "emergency_pharmacies/{pharmacyId}": {
+      "schema": "EmergencyPharmacy",
+      "description": "Nearby pharmacies"
+    }
+  }
+}
