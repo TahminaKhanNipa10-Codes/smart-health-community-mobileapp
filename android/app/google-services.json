@@ -1,27 +1,79 @@
 {
   "project_info": {
-    "project_id": "remixed-project-id",
-    "project_number": "1234567890"
+    "project_number": "34931404489",
+    "project_id": "smart-health-community",
+    "storage_bucket": "smart-health-community.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1234567890:android:remixedappid",
+        "mobilesdk_app_id": "1:34931404489:android:41d004213d4053caa3a718",
         "android_client_info": {
-          "package_name": "com.aistudio.applet.pqqbpk"
+          "package_name": "com.smarthealthcommunity.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1234567890-examplewebclientid.apps.googleusercontent.com",
+          "client_id": "34931404489-0o8jvgoko2eoi27n4j5un2n214iveiqh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.smarthealthcommunity.app",
+            "certificate_hash": "86787033dcae88bdd5d475c265b8e36b3fac14fb"
+          }
+        },
+        {
+          "client_id": "34931404489-2vg9288r4k8kf4k3lhopj3uq9fursj2a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.smarthealthcommunity.app",
+            "certificate_hash": "a1a246f9a444a7fbfe1c625ace078d53af5bacf6"
+          }
+        },
+        {
+          "client_id": "34931404489-9ic9grs52uoc0vi85vcvh830np7t8ru9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.smarthealthcommunity.app",
+            "certificate_hash": "ac0e8c5a75caeb0ec8accb71a56d9d6523886664"
+          }
+        },
+        {
+          "client_id": "34931404489-c9vroajihq1ij7dveua9hjvs0oiutfbe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.smarthealthcommunity.app",
+            "certificate_hash": "d299b8216dbf4f436bdd5e7a1c1e395476de4627"
+          }
+        },
+        {
+          "client_id": "34931404489-hisart5io201ss815lca8r5uv14dav7s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.smarthealthcommunity.app",
+            "certificate_hash": "b9026a365a77ae0ff3cb5df6171008be88628d78"
+          }
+        },
+        {
+          "client_id": "34931404489-kksv2q7tfbdpp7skvo9dj05pql91frc2.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "remixed-api-key"
+          "current_key": "AIzaSyBUEynQLZmixez5iwKqjTy5BfqPeflr0XA"
         }
-      ]
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "34931404489-kksv2q7tfbdpp7skvo9dj05pql91frc2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
     }
-  ]
+  ],
+  "configuration_version": "1"
 }
