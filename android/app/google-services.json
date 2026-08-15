@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_id": "future-phantasmata-df6jr",
+    "project_number": "365411214258",
+    "storage_bucket": "future-phantasmata-df6jr.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:365411214258:android:79bd5b40b890cd3cf1baab",
+        "android_client_info": {
+          "package_name": "com.smarthealthcommunity.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "365411214258-mit1mbds92dg91um2k3a7050fp02ja9d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFj7oRDgh022LrKzVIyVVljM4lxCuyqYo"
+        }
+      ]
+    }
+  ],
+  "configuration_version": "1"
+}

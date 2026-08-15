@@ -1,0 +1,312 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Auth tokens NEVER contain custom claims (e.g., request.auth.token.role or admin). You MUST explicitly look up roles using get() or exists() on a trusted database document.
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Entity validation helper
+    function isValidUser(data) {
+      return ('uid' in data == false || (data.uid is string && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')))
+        && ('email' in data == false || (data.email is string && data.email.size() <= 256))
+        && ('name' in data == false || (data.name is string && data.name.size() <= 100))
+        && ('role' in data == false || (data.role is string && (data.role == 'user' || data.role == 'doctor' || data.role == 'admin')))
+        && ('age' in data == false || data.age == '' || (data.age is number && data.age >= 0 && data.age <= 150))
+        && ('gender' in data == false || data.gender == '' || data.gender == 'Male' || data.gender == 'Female' || data.gender == 'Other')
+        && ('height' in data == false || data.height == '' || (data.height is number && data.height >= 0 && data.height <= 300))
+        && ('weight' in data == false || data.weight == '' || (data.weight is number && data.weight >= 0 && data.weight <= 1000))
+        && ('bloodGroup' in data == false || data.bloodGroup == '' || data.bloodGroup == 'A+' || data.bloodGroup == 'A-' || data.bloodGroup == 'B+' || data.bloodGroup == 'B-' || data.bloodGroup == 'AB+' || data.bloodGroup == 'AB-' || data.bloodGroup == 'O+' || data.bloodGroup == 'O-')
+        && ('phoneNumber' in data == false || (data.phoneNumber is string && data.phoneNumber.size() <= 20))
+        && ('address' in data == false || (data.address is string && data.address.size() <= 500))
+        && ('emergencyContact' in data == false || (data.emergencyContact is string && data.emergencyContact.size() <= 100));
+    }
+
+    function isValidDonor(data) {
+      return data.userId is string && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.fullName is string && data.fullName.size() <= 100
+        && data.bloodGroup is string && (data.bloodGroup == 'A+' || data.bloodGroup == 'A-' || data.bloodGroup == 'B+' || data.bloodGroup == 'B-' || data.bloodGroup == 'AB+' || data.bloodGroup == 'AB-' || data.bloodGroup == 'O+' || data.bloodGroup == 'O-')
+        && data.phoneNumber is string && data.phoneNumber.size() <= 20
+        && data.district is string && data.district.size() <= 100
+        && data.lastDonationDate is string && data.lastDonationDate.size() <= 100
+        && data.availableNow is bool
+        && data.emergencyDonation is bool;
+    }
+
+    // Match rules for users collection
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      
+      allow create: if isSignedIn() 
+        && isOwner(userId)
+        && isValidId(userId)
+        && isValidUser(incoming())
+        && ('uid' in incoming() == false || incoming().uid == userId)
+        && ('email' in incoming() == false || incoming().email == request.auth.token.email || incoming().email == '')
+        && ('role' in incoming() == false || incoming().role == 'user' || incoming().role == 'doctor')
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (
+          isOwner(userId)
+          && isValidId(userId)
+          && isValidUser(incoming())
+          && ('uid' in incoming() == false || incoming().uid == userId)
+          && ('email' in existing() == false || 'email' in incoming() == false || incoming().email == existing().email || incoming().email == request.auth.token.email)
+          && ('createdAt' in existing() == false || 'createdAt' in incoming() == false || incoming().createdAt == existing().createdAt)
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'age', 'gender', 'height', 'weight', 'bloodGroup', 'phoneNumber', 'address', 'emergencyContact', 'updatedAt', 'uid', 'email', 'role', 'createdAt'])
+             && ('role' in existing() == false || 'role' in incoming() == false || incoming().role == existing().role)
+          )
+        )
+      );
+
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    // Match rules for health_logs collection
+    match /health_logs/{logId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid && !isAdmin();
+      
+      allow create: if isSignedIn() 
+        && isOwner(incoming().userId)
+        && isValidId(logId)
+        && incoming().createdAt == request.time
+        && (
+          (incoming().type == 'bmi' && incoming().metrics.weight is number && incoming().metrics.height is number && incoming().metrics.bmi is number) ||
+          (incoming().type == 'water' && incoming().metrics.amount is number && incoming().metrics.dailyGoal is number && incoming().metrics.date is string) ||
+          (incoming().type == 'blood_sugar' && incoming().metrics.glucose is number && incoming().metrics.sugarType is string && incoming().metrics.dateTime is string) ||
+          (incoming().type == 'blood_pressure' && incoming().metrics.systolic is number && incoming().metrics.diastolic is number && incoming().metrics.dateTime is string)
+        );
+
+      allow update: if isSignedIn()
+        && existing().userId == request.auth.uid
+        && incoming().userId == request.auth.uid
+        && incoming().type == existing().type
+        && (
+          (existing().type == 'water' && incoming().metrics.amount is number && incoming().metrics.dailyGoal is number && incoming().metrics.date == existing().metrics.date)
+        );
+    }
+
+    // Match rules for posts collection
+    match /posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || (incoming().userId == resource.data.userId && incoming().likes is list) || isAdmin());
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Match rules for comments collection
+    match /comments/{commentId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Match rules for blood_requests collection
+    match /blood_requests/{requestId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid && !isAdmin();
+    }
+
+    // Match rules for appointments collection
+    match /appointments/{appointmentId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && (
+        incoming().userId == request.auth.uid || 
+        incoming().patientId == request.auth.uid || 
+        incoming().patientUid == request.auth.uid
+      ) && (
+        !('status' in incoming()) || 
+        incoming().status in ['pending', 'Pending', 'PENDING']
+      );
+      allow update: if isSignedIn() && (
+        // Assigned Doctor can update status (approve, reject, complete)
+        (
+          (
+            resource.data.doctorId == request.auth.uid || 
+            ('doctorUserId' in resource.data && resource.data.doctorUserId == request.auth.uid)
+          ) && (
+            !('status' in incoming().diff(existing()).affectedKeys()) ||
+            incoming().status == existing().status ||
+            (
+              existing().status in ['pending', 'Pending', 'PENDING'] && 
+              incoming().status in ['approved', 'Approved', 'CONFIRMED', 'confirmed', 'rejected', 'Rejected', 'CANCELLED', 'cancelled', 'declined', 'Declined']
+            ) ||
+            (
+              existing().status in ['approved', 'Approved', 'CONFIRMED', 'confirmed'] && 
+              incoming().status in ['completed', 'Completed', 'COMPLETED', 'rejected', 'Rejected', 'CANCELLED', 'cancelled']
+            )
+          )
+        ) ||
+        // Patient can cancel their own appointment or update notes, but cannot approve/complete
+        (
+          (resource.data.userId == request.auth.uid || 
+           resource.data.patientId == request.auth.uid || 
+           resource.data.patientUid == request.auth.uid) &&
+          (
+            !('status' in incoming().diff(existing()).affectedKeys()) ||
+            incoming().status == existing().status ||
+            incoming().status in ['cancelled', 'Cancelled', 'CANCELLED', 'declined', 'Declined', 'rejected', 'Rejected', 'REJECTED']
+          )
+        ) ||
+        // Admin can only update non-status administrative metadata (CANNOT change clinical status)
+        (
+          isAdmin() && (
+            !('status' in incoming().diff(existing()).affectedKeys()) || 
+            incoming().status == existing().status
+          )
+        )
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.patientId == request.auth.uid || 
+        resource.data.patientUid == request.auth.uid ||
+        resource.data.doctorId == request.auth.uid ||
+        ('doctorUserId' in resource.data && resource.data.doctorUserId == request.auth.uid)
+      );
+    }
+
+    // Match rules for doctors collection
+    match /doctors/{doctorId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    // Match rules for articles collection
+    match /articles/{articleId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isSignedIn() && isAdmin();
+    }
+
+    // Match rules for notifications collection
+    match /notifications/{notificationId} {
+      allow read, update: if isSignedIn() && (resource.data.recipientId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && resource.data.recipientId == request.auth.uid && !isAdmin();
+      allow create: if isSignedIn();
+    }
+
+    // Match rules for donors collection
+    match /donors/{donorId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && isOwner(donorId)
+        && isValidId(donorId)
+        && isValidDonor(incoming())
+        && incoming().userId == donorId
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isSignedIn() && (
+        (
+          isAdmin() &&
+          incoming().availableNow == existing().availableNow &&
+          incoming().emergencyDonation == existing().emergencyDonation
+        ) ||
+        (
+          isOwner(donorId)
+          && isValidId(donorId)
+          && isValidDonor(incoming())
+          && incoming().userId == donorId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+        )
+      );
+      allow delete: if isSignedIn() && isOwner(donorId) && !isAdmin();
+    }
+
+    // Match rules for medicines collection
+    match /medicines/{medicineId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid && !isAdmin();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == request.auth.uid;
+    }
+
+    // Match rules for vaccinations collection
+    match /vaccinations/{vaccinationId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid && !isAdmin();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == request.auth.uid;
+    }
+
+    // Match rules for medical_reports collection
+    match /medical_reports/{reportId} {
+      allow read: if isSignedIn();
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid && !isAdmin();
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Match rules for emergency_requests collection
+    match /emergency_requests/{requestId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    // Match rules for emergency collections
+    match /emergency_hospitals/{hospitalId} {
+      allow read: if true;
+      allow create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /emergency_ambulances/{ambulanceId} {
+      allow read: if true;
+      allow create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /emergency_pharmacies/{pharmacyId} {
+      allow read: if true;
+      allow create, update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    match /emergency_directory/{directoryId} {
+      allow read: if true;
+      allow create, update: if isSignedIn();
+      allow delete: if false;
+    }
+  }
+}

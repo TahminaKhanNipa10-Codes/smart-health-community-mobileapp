@@ -1,0 +1,10 @@
+{
+  "name": "Remix Remix Remix Smart Health Community_mobileapp3",
+  "description": "A secure, production-ready healthcare web application connecting general users, doctors, and administrators with health metrics tracking and community features.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
